@@ -37,10 +37,10 @@ nonogram_list([],C,C).
 
 nonogram_list([1|T],C,Acc) :-
     Accn is Acc + 1,
-    binary_list(T,C,Accn).
+    nonogram_list(T,C,Accn).
 
 nonogram_list([0|T],C,Acc) :-
-    binary_list(T,C,Acc).
+    nonogram_list(T,C,Acc).
 
 
 nonogram_matrix(N,M,Matrix,OnesR,OnesC) :-
@@ -114,7 +114,9 @@ is_nonogram(M,[Rh|Rt],[Sh|St]) :-
     Ms is M - 1,
     is_nonogram(Ms,Rt,St).
 
-is_nonogram(nonogram(N,M,RowData,ColData),Solution) :-
+is_nonogram(nonogram(N,M,ColData,RowData),Solution) :-
+    length(ColData,M),
+    length(RowData,N),
     get_ones(RowData,[],OnesR),
     get_ones(ColData,[],OnesC),
     nonogram_matrix(N,M,Solution,OnesR,OnesC),
