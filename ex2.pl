@@ -1,7 +1,24 @@
 % Tests
+nonogramPuzzle(easy,1,nonogram(Rows,Cols,ColsBlocks,RowsBlocks)):-
+    Rows=4,
+    Cols=4,
+    ColsBlocks=[[3],[1,1],[1,1],[2]],
+    RowsBlocks=[[4],[1,1],[2],[1]].
 
+nonogramPuzzle(easy,2,nonogram(Rows,Cols,ColsBlocks,RowsBlocks)):-
+    Rows=5,
+    Cols=5,
+    ColsBlocks=[[3],[4],[5],[4],[3]],
+    RowsBlocks=[[1],[3],[5],[5],[5]].
+
+nonogramPuzzle(easy,4,nonogram(Rows,Cols,ColsBlocks,RowsBlocks)):- % 2 solutions
+    Rows=8,
+    Cols=7,
+    ColsBlocks=[[2],[1,1],[2],[2,4],[1,1,2],[1,1,1,1],[2,2]],
+    RowsBlocks=[[2],[1,1],[1,1],[2],[2,1],[1,2,2],[4,1],[3]].
 
 % utils
+
 transpose([], []).
 transpose([F|Fs], Ts) :-
     transpose(F, [F|Fs], Ts).
@@ -15,31 +32,48 @@ lists_firsts_rests([], [], []).
 lists_firsts_rests([[F|Os]|Rest], [F|Fs], [Os|Oss]) :-
         lists_firsts_rests(Rest, Fs, Oss).
 
-is_binary(0).
-is_binary(1).
 
-is_binary_list([H|T]) :-
-    is_binary(H),
-    is_binary_list(T).
+nonogram_list([],C,C).
 
-is_binary_list([]).
+nonogram_list([1|T],C,Acc) :-
+    Accn is Acc + 1,
+    binary_list(T,C,Accn).
 
-size_of_matrix(N,M,Matrix) :-
+nonogram_list([0|T],C,Acc) :-
+    binary_list(T,C,Acc).
+
+
+nonogram_matrix(N,M,Matrix,OnesR,OnesC) :-
     length(Matrix,N),
-    size_of_matrix(M,Matrix).
+    nonogram_matrix(M,Matrix,OnesR),
+    transpose(Matrix,Ts),
+    nonogram_matrix(N,Ts,OnesC).
 
-size_of_matrix(N,[Mh|Mt]) :-
+nonogram_matrix(_,[],[]).
+
+nonogram_matrix(N,[Mh|Mt],[Oh|Ot]) :-
     length(Mh,N),
-    is_binary_list(Mh),
-    size_of_matrix(N,Mt).
+    nonogram_list(Mh,Oh,0),
+    nonogram_matrix(N,Mt,Ot).
 
-size_of_matrix(_,[]).
 
-is_equal([A|As],[B|Bs]) :-
-    A == B,
-    is_equal(As,Bs).
+sum_list([], 0).
 
-is_equal([],[]).
+sum_list([H|T], Sum) :-
+   sum_list(T, Rest),
+   Sum is H + Rest.
+
+get_ones([H|T],I,C) :-
+    is_list(H),
+    sum_list(H,Sum),
+    append(I,[Sum],Is),
+    get_ones(T,Is,C).
+
+get_ones([H|T],I,C) :-
+    append(I,[H],Is),
+    get_ones(T,Is,C). 
+
+get_ones([],I,I).
 
 % end utils
 
@@ -80,15 +114,14 @@ is_nonogram(M,[Rh|Rt],[Sh|St]) :-
     Ms is M - 1,
     is_nonogram(Ms,Rt,St).
 
-
-
-is_nonogram(nonogram(N,M,ColData,RowData),Solution) :-
-    length(ColData,M),
-    length(RowData,N),
-    size_of_matrix(N,M,Solution),
-    is_nonogram(N,RowData,Solution),
+is_nonogram(nonogram(N,M,RowData,ColData),Solution) :-
+    get_ones(RowData,[],OnesR),
+    get_ones(ColData,[],OnesC),
+    nonogram_matrix(N,M,Solution,OnesR,OnesC),
     transpose(Solution,Ts),
+    is_nonogram(N,RowData,Solution),
     is_nonogram(M,ColData,Ts).
+
 
 nonogram_solve(nonogram(N,M,ColData,RowData), Solution) :-
     is_nonogram(nonogram(N,M,ColData,RowData),Solution).
