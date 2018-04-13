@@ -1,3 +1,4 @@
+:- use_module(naive_sat).
 % Tests
 
 
@@ -297,11 +298,10 @@ first_set(N,[K|R1],[K|R2]):-
 first_set(1,[K|_],[K]).
 
 
-last_set(N,K,[N|Rest]):-
-   Ns is N-1,
-    Ks is K-1,
-    Ks >0,
-    last_e(Ns,Ks,Rest).
+last_set(K,In,Out):-
+   reverse_1(In,Ls,[]),
+   first_set(K,Ls,Rl),
+   reverse_1(Rl , Out,[]).
 
 
 incr_set(_,[],[]).
@@ -314,7 +314,7 @@ incr_set(N,[K|Rest],[Ks|Rest]):-
 incr_set(N,[K1,K2|R],[K1s, K2s|Rs]):-
     Ns is N-1,
     K1 == N,
-    incr(Ns,[K2|R],[K2s|Rs]),
+    incr_set(Ns,[K2|R],[K2s|Rs]),
     K1s is K2s+1,
     N>0.
 
@@ -355,7 +355,10 @@ create_map(N,[_|L]):-
     create_map(Ns,L).
 
 
-map_to_cnf(Map,S,T,CNF).
+map_to_cnf(Map,S,T,CNF):-
+    get_words_set(Map,S,L1),
+    get_words_set(Map,T,L2),
+    append(L1,L2,CNF).
 
 
 
