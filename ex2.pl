@@ -317,8 +317,27 @@ subset_2([E|Tail], [E|NTail]):-
 subset_2([_|Tail], NTail):-
   subset_2(Tail, NTail).
 
- subset_3(L,A) :-
-    bagof(B,subset_2(L,B),A).
+subset_3(L,A) :-
+   bagof(B,subset_2(L,B),A).
+
+
+subset_2([], [],_).
+
+subset_2([E|Tail], [-E|NTail],Num):-
+  Num == -1,
+  subset_2(Tail, NTail,Num).
+
+subset_2([E|Tail], [E|NTail],Num):-
+  Num == 1,
+  subset_2(Tail, NTail,Num).
+
+
+subset_2([_|Tail], NTail,Num):-
+  subset_2(Tail, NTail,Num).
+
+subset_3(L,A,Num) :-
+   bagof(B,subset_2(L,B,Num),A).
+
 
 %Part 3
 
@@ -342,13 +361,61 @@ create_map(N,[_|L]):-
     create_map(Ns,L).
 
 
-map_to_cnf(Map,_,_,CNF):-
-    subset_2(Map,L1),
-    subset_2(Map,L2),
-    append(L1,L2,CNF).
+map_to_cnf(Map,S,T,CNF):-
+    subset_3(Map,L1,1),
+    get_n_size(L1,S,L1s),
+    subset_3(Map,L2,-1),
+    get_n_size(L2,T,L2s),
+    append(L1s,L2s,CNF).
+
+get_n_size([],_,[]).
+
+get_n_size([H|R1],N,[H|R2]):-
+    length(H,N),
+    get_n_size(R1,N,R2).
+
+get_n_size([H|R1],N, L2):-
+    length(H,Ns),
+    N \==Ns,
+    get_n_size(R1,N,L2).
+
 
 
 %Task 6
+
+decode_ramsey(Map,Solution):-
+    length(Map,N),
+    get_graph_size(N,En),
+    get_word_list(En,2,Edges),
+    get_graph_edges(Edges,Map,Ge),
+    edges_to_matrix(En,Ge,Solution).
+
+get_graph_size(N,En):-
+    S1 is 8*N,
+    S2 is S1+1,
+    S3 is sqrt(S2),
+    S4 is S3 +1,
+    En is round(S4/2).
+
+
+get_graph_edges([],[],[]).
+
+get_graph_edges([Edge|Re],[H|Rm],[Edge|Ra]):-
+    H ==1,
+    get_graph_edges(Re,Rm,Ra).
+
+get_graph_edges([_|Re],[H|Rm],Sol):-
+    H == -1,
+    get_graph_edges(Re,Rm,Sol).
+
+
+%Task 7
+
+solve_ramsey(r(S,T,N), Solution):-
+    encode_ramsey(r(S,T,N),Map,CNF),
+    sat(CNF),
+    decode_ramsey(Map,Solution).
+
 
 
 
