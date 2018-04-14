@@ -80,7 +80,7 @@ is_nonogram(nonogram(N,M,ColData,RowData),Solution) :-
 nonogram_solve(nonogram(N,M,ColData,RowData), Solution):-
 	construct_matrix(N,M,RowData,Solution),
     transpose(Solution,Ts),
-    is_nonogram(M,N,ColData,Ts).
+    construct_matrix(M,N,ColData,Ts).
 	
 construct_matrix(N,M,[Rh|Rt],[Sh|St]):-
 	N > 0,
@@ -107,8 +107,8 @@ insert_hint([R], Solution):-
 	fill_with_k(N, 0, Nl).
 
 
-insert_hint(RowData, [0|Solution]):-
-	insert_hint(RowData, Solution).
+insert_hint(R, [0|Solution]):-
+	insert_hint(R, Solution).
 	
 fill_with_k([], _, 0).
 fill_with_k([H|T], H, N) :- 
