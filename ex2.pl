@@ -103,24 +103,56 @@ nonogram_solve(nonogram(N,M,ColData,RowData), Solution) :-
 
  reverse_1([H|T],Z,Acc) :- reverse_1(T,Z,[H|Acc]).
 
-verify_ramsey(r(S,_,N), Solution, CounterExample):-
+
+
+
+verify_ramsey(r(S,T,N), Solution, ramsey):-
+    get_word_list(N,S,L1),
+    get_word_list(N,T,L2),
+    hasnt_clique(L1,Solution,0),
+    hasnt_clique(L2,Solution,1).
+
+verify_ramsey(r(S,T,N), Solution, Counter):-
+    verify_ramsey_h(r(S,T,N), Solution, Counter).
+
+
+verify_ramsey_h(r(S,_,N), Solution, CounterExample):-
     get_word_list(N,S,L),
+    has_clique(L,Solution,0),
     check_solution(L, Solution, CounterExample,0).
 
 
-verify_ramsey(r(_,T,N), Solution, Ce):-
+verify_ramsey_h(r(_,T,N), Solution, Ce):-
     get_word_list(N,T,L),
+    has_clique(L,Solution,1),
     check_solution(L, Solution, Ce,1).
+
+hasnt_clique([V|Rest],Sol,Num):-
+    \+is_clique(V,Sol,Num),
+    hasnt_clique(Rest,Sol,Num).
+
+hasnt_clique([],_,_).
+
+
+has_clique([V|_],Sol,Num):-
+    is_clique(V,Sol,Num).
+
+has_clique([_|Rest],Sol,Num):-
+    has_clique(Rest,Sol,Num).
+
+has_clique([],_,_):-
+    false.
+
 
 check_solution([V|_], Sol, Vs,Num):-
     is_clique(V,Sol,Num),
     reverse_1(V,Vs,[]).
 
-check_solution([H|Rest],Sol,V,Num):-
-    H \== V,
-    check_solution(Rest,Sol,V,Num).
 
-check_solution([],_,ramsey,_).
+check_solution([_|Rest], Sol, Vs,Num):-
+    check_solution(Rest, Sol, Vs,Num).
+
+
 
 is_clique([],_,_).
 
@@ -203,24 +235,25 @@ get_words(N,Previous, Last, [Next|Rest]):-
 %Task 4
 
 find_ramsey(r(S,T,N),Sol):-
-    get_all_ramsey(Rlist,N),
-    check_all(r(S,T,N),Rlist,Sol).
+    get_all_ramsey(N,Rlist),
+    find_solution(r(S,T,N),Rlist,Sol).
 
-check_all(r(S,T,N),[Sol|_],Sol):-
+
+
+find_solution(r(S,T,N),[Sol|_],Sol):-
     verify_ramsey(r(S,T,N),Sol,ramsey).
 
-check_all(r(S,T,N),[H|Rest],Sol):-
-    H \== Sol,
-    check_all(r(S,T,N),Rest,Sol).
 
+find_solution(r(S,T,N),[_|Rest],Sol):-
+    find_solution(r(S,T,N),Rest,Sol).
+find_solution(_,[],_):- false.
 
-get_all_ramsey(Rlist,N):-
+get_all_ramsey(N,Rlist):-
     get_word_list(N,2,Edges),
-    all_subsets(Edges,Elist),
+    subset_3(Edges,Elist),
     elist_to_mlist(N,Elist,Rlist).
 
-elist_to_mlist(N,[H1],[H2]):-
-    edges_to_matrix(N,H1,H2).
+elist_to_mlist(_,[],[]).
 
 elist_to_mlist(N,[H1|R1],[H2|R2]):-
     edges_to_matrix(N,H1,H2),
@@ -236,12 +269,14 @@ zero_matrix(0,_,[]).
 
 zero_matrix(M,N,[H|Rest]):-
     n_zeros(N,H),
+    M>0,
     Ms is M-1,
     zero_matrix(Ms,N,Rest).
 
 n_zeros(0,[]).
 
 n_zeros(N,[0|R]):-
+    N>0,
     Ns is N-1,
     n_zeros(Ns,R).
 
@@ -273,65 +308,17 @@ add_j_to_list(J,[H|R1],[H|R2]):-
     Js is J-1,
     add_j_to_list(Js,R1,R2).
 
-all_subsets(_,[]).
 
+subset_2([], []).
 
-all_subsets(Edges,[H|L]):-
-    powerset(Edges,H),
-    \+member(H,L),
-    all_subsets(Edges,L).
+subset_2([E|Tail], [E|NTail]):-
+  subset_2(Tail, NTail).
 
+subset_2([_|Tail], NTail):-
+  subset_2(Tail, NTail).
 
-
-
-powerset(L, [H|T]):-
-  append([H|T], _, L).
-powerset([_|L], P):-
-  powerset(L, P).
-
-
-first_set(N,[K|R1],[K|R2]):-
-    Ns is N-1,
-    Ns > 0 ,
-    first_set(Ns, R1,R2).
-
-first_set(1,[K|_],[K]).
-
-
-last_set(K,In,Out):-
-   reverse_1(In,Ls,[]),
-   first_set(K,Ls,Rl),
-   reverse_1(Rl , Out,[]).
-
-
-incr_set(_,[],[]).
-
-incr_set(N,[K|Rest],[Ks|Rest]):-
-    Ks is K+1,
-    K<N,
-    N > 0.
-
-incr_set(N,[K1,K2|R],[K1s, K2s|Rs]):-
-    Ns is N-1,
-    K1 == N,
-    incr_set(Ns,[K2|R],[K2s|Rs]),
-    K1s is K2s+1,
-    N>0.
-
-
-get_words_set(N,K,[First|Rest]):-
-    first(K,First),
-    last_e(N,K,Last),
-    get_words(N,First,Last,Rest).
-
-get_words_set(_,L,L,[]).
-
-get_words_set(N,Previous, Last, [Next|Rest]):-
-    incr(N,Previous, Next),
-    get_words(N,Next, Last, Rest).
-
-
-
+ subset_3(L,A) :-
+    bagof(B,subset_2(L,B),A).
 
 %Part 3
 
@@ -355,11 +342,13 @@ create_map(N,[_|L]):-
     create_map(Ns,L).
 
 
-map_to_cnf(Map,S,T,CNF):-
-    get_words_set(Map,S,L1),
-    get_words_set(Map,T,L2),
+map_to_cnf(Map,_,_,CNF):-
+    subset_2(Map,L1),
+    subset_2(Map,L2),
     append(L1,L2,CNF).
 
+
+%Task 6
 
 
 
