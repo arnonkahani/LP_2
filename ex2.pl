@@ -362,11 +362,11 @@ create_map(N,[_|L]):-
 
 
 map_to_cnf(Map,S,T,CNF):-
-    subset_3(Map,L1,1),
+    subset_3(Map,L1),
     get_n_size(L1,S,L1s),
-    subset_3(Map,L2,-1),
-    get_n_size(L2,T,L2s),
+    get_n_size(L1,T,L2s,-1),
     append(L1s,L2s,CNF).
+
 
 get_n_size([],_,[]).
 
@@ -379,7 +379,23 @@ get_n_size([H|R1],N, L2):-
     N \==Ns,
     get_n_size(R1,N,L2).
 
+get_n_size([],_,[],_).
 
+get_n_size([H|R1],N,[Hs|R2],Num):-
+    length(H,N),
+    change_co(H,Num,Hs),
+    get_n_size(R1,N,R2,Num).
+
+get_n_size([H|R1],N, L2,Num):-
+    length(H,Ns),
+    N \==Ns,
+    get_n_size(R1,N,L2,Num).
+
+
+change_co([],_,[]).
+
+change_co([H|R1],Num,[-H|R2]):-
+    change_co(R1,Num,R2).
 
 %Task 6
 
@@ -416,8 +432,49 @@ solve_ramsey(r(S,T,N), Solution):-
     sat(CNF),
     decode_ramsey(Map,Solution).
 
+first_set([H|R1],K,[H|R2]):-
+    Ks is K-1,
+    K > 0 ,
+    first_set(R1,Ks, R2).
+
+first_set(_,0,[]).
+
+last_set(L,K,Sol):-
+    reverse_1(L,Ls,[]),
+    first_set(Ls,K,Lss),
+    reverse_1(Lss,Sol,[]).
 
 
+incr_set(_,[],[]).
+
+get_ks([K,Ks|_],K,Ks).
+
+get_ks([H|Rest],K,Ks):-
+    H\==K,
+    get_ks(Rest,K,Ks).
+
+incr_set(Set,[K|Rest],[Ks|Rest]):-
+    get_ks(Set,K,Ks)),
+    N \== [].
+
+incr_set(N,[K1,K2|R],[K1s, K2s|Rs]):-
+    Ns is N-1,
+    K1 == N,
+    incr_set(Ns,[K2|R],[K2s|Rs]),
+    K1s is K2s+1,
+    N>0.
+
+
+get_word_list_set(Set,K,[First|Rest]):-
+    first_set(Set,K,First),
+    last_set(Set,K,Last),
+    get_words_set(Set,First,Last,Rest).
+
+get_words_set(_,L,L,[]).
+
+get_words_set(N,Previous, Last, [Next|Rest]):-
+    incr_set(N,Previous, Next),
+    get_words_set(N,Next, Last, Rest).
 
 
 
